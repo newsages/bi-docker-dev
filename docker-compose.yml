@@ -1,58 +1,120 @@
-version: "3.1"
+version: "3.3"
 services:
   
   # Kafka/Zookeeper container
-  eco-kafka:
-    build: eco-kafka/
-    container_name: eco-kafka
-    environment:
-      - ADVERTISED_HOST=eco-kafka
-      - LOG_RETENTION_HOURS=1
-      - AUTO_CREATE_TOPICS=false
-      - KAFKA_CREATE_TOPICS=divolte:4:1
-    ports:
-      - 9092:9092 # kafka broker
-      - 2181:2181 # Zookeeper
+  #eco-kafka:
+  #  build: eco-kafka/
+  #  container_name: eco-kafka
+  #  environment:
+  #    - ADVERTISED_HOST=eco-kafka
+  #    - LOG_RETENTION_HOURS=1
+  #    - AUTO_CREATE_TOPICS=false
+  #    - KAFKA_CREATE_TOPICS=divolte:4:1
+  #  ports:
+  #    - 9092:9092 # kafka broker
+  #    - 2181:2181 # Zookeeper
   
   # Divolte container
-  eco-divolte:
-    build: eco-divolte/
-    container_name: eco-divolte
-    environment:
-      - DIVOLTE_KAFKA_BROKER_LIST=eco-kafka:9092
-    volumes:
-      - ./conf/divolte/:/opt/divolte/divolte-collector-0.5.0/conf/
-    ports:
-      - 8290:8290
-    depends_on:
-      - eco-kafka
-    links:
-      - eco-kafka:eco-kafka
+  #eco-divolte:
+  #  build: eco-divolte/
+  #  container_name: eco-divolte
+  #  environment:
+  #    - DIVOLTE_KAFKA_BROKER_LIST=eco-kafka:9092
+  #  volumes:
+  #    - ./conf/divolte/:/opt/divolte/divolte-collector-0.5.0/conf/
+  #  ports:
+  #    - 8290:8290
+  #  depends_on:
+  #    - eco-kafka
+  #  links:
+  #    - eco-kafka:eco-kafka
 
   # Druid container
-  eco-druid:
-    build: eco-druid/
-    container_name: eco-druid
-    ports:
-      - 8081:8081
-      - 8082:8082
-    depends_on:
-      - eco-kafka
-    links:
-      - eco-kafka:eco-kafka
+  #eco-druid:
+  #  build: eco-druid/
+  #  container_name: eco-druid
+  #  ports:
+  #    - 8081:8081
+  #    - 8082:8082
+  #  depends_on:
+  #    - eco-kafka
+  #  links:
+  #    - eco-kafka:eco-kafka
   
-  # Superset container
-  docker-superset:
-    build: eco-superset/
-    container_name: eco-superset
+
+  ####################################################################
+  # Superset container STACK
+  ####################################################################
+  #docker-superset:
+  #  build: eco-superset/
+  #  container_name: eco-superset
+  #  ports:
+  #    - 8088:8088
+  #  links:
+  #    - eco-druid:eco-druid
+
+  eco-redis:
+    image: redis:3.2
+    container_name: ${REDIS_HOST}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - eco-redis-data:/data
+
+  eco-postgres:
+    image: postgres:10
+    container_name: ${POSTGRES_HOST}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - eco-postgres-data:/var/lib/postgresql/data
+
+  eco-superset:
+    container_name: ${SUPERSET_HOST}
+    build: 
+      context: eco-superset
+      dockerfile: contrib/docker/Dockerfile
+      #restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      SUPERSET_ENV: ${SUPERSET_ENV}
+    user: root:root
     ports:
       - 8088:8088
-    links:
-      - eco-druid:eco-druid
-  # Superset container
-  eco-app:
-    build: app/
-    container_name: eco-app
-    ports:
-      - 8090:8090
+    depends_on:
+      - ${POSTGRES_HOST}
+      - ${REDIS_HOST}
+    volumes:
+      # this is needed to communicate with the postgres and redis services
+      - ./superset_config.py:/home/superset/superset/superset_config.py
+      # this is needed for development, remove with SUPERSET_ENV=production
+      - ../../superset:/home/superset/superset
+  ####################################################################
+  # END Superset container STACK
+  ####################################################################
 
+  # Superset container
+  #eco-app:
+  #  build: app/
+  #  container_name: eco-app
+  #  ports:
+  #    - 8090:8090
+
+
+volumes:
+  eco-postgres-data:
+    external: false
+  eco-redis-data:
+    external: false
