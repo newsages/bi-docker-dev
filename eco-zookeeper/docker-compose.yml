@@ -1,0 +1,8 @@
+version: "3"
+services:
+  eco-zookeeper:
+    hostname: eco-zookeeper
+    container_name: eco-zookeeper
+    image: 'bitnami/zookeeper:latest'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
