@@ -2,6 +2,10 @@
 
 ''' docker-compose rm -f && docker-compose build && docker-compose up '''
 
+# Platform
+![stack](assets/stack.jpg)
+
+
 # Containers 
 
 |CONTAINER | HOST | Service | PORT    | URL |
