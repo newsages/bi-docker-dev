@@ -59,12 +59,12 @@ RUN mv "${NIFI_BASE_DIR}/nifi-toolkit-${NIFI_VERSION}" "${NIFI_TOOLKIT_HOME}"
 RUN ln -s "${NIFI_TOOLKIT_HOME}" "${NIFI_BASE_DIR}/nifi-toolkit-${NIFI_VERSION}"
 
 # Download, validate, and expand Apache NiFi binary.
-RUN echo "curl -fSL ${MIRROR_BASE_URL}/${NIFI_BINARY_PATH} -o ${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.zip "
+RUN echo "curl -fSL ${MIRROR_BASE_URL}/${NIFI_BINARY_PATH} -o ${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.zip"
 RUN curl -fSL "${MIRROR_BASE_URL}/${NIFI_BINARY_PATH}" -o "${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.zip"
 RUN echo $(curl ${BASE_URL}/${NIFI_BINARY_PATH}.sha256) *${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.zip | sha256sum -c - 
 RUN unzip "${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.zip" -d "${NIFI_BASE_DIR}"
 RUN rm "${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.zip"
-RUN mv "${NIFI_BASE_DIR}/nifi-${NIFI_VERSION} ${NIFI_HOME}"
+RUN mv "${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}" "${NIFI_HOME}"
 RUN mkdir -p "${NIFI_HOME}/conf"
 RUN mkdir -p "${NIFI_HOME}/database_repository"
 RUN mkdir -p "${NIFI_HOME}/flowfile_repository"
