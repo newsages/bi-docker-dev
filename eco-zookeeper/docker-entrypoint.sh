@@ -1,10 +1,11 @@
 #!/bin/bash
 
 set -e
+cd "$ZOO_HOME_DIR"
 
 # Allow the container to be started with `--user`
 if [[ "$1" = 'zkServer.sh' && "$(id -u)" = '0' ]]; then
-    chown -R zookeeper "$ZOO_DATA_DIR" "$ZOO_DATA_LOG_DIR" "$ZOO_LOG_DIR" "$ZOO_CONF_DIR"
+    chown -R zookeeper "$ZOO_DATA_DIR" "$ZOO_DATA_LOG_DIR" "$ZOO_LOG_DIR" "$ZOO_CONF_DIR" "$ZOO_HOME_DIR"
     exec gosu zookeeper "$0" "$@"
 fi
 

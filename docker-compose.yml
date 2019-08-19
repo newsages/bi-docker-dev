@@ -1,15 +1,14 @@
-version: "3"
+version: "3.3"
 services:
-#ZooKeepr Cluster
+  ############################################
+  #ZooKeepr Cluster
   zk1:
     build: eco-zookeeper/
-    container_name: zk1
-    hostname: zk1
+    container_name: $ZOO_HOSTNAME_1
+    hostname: $ZOO_HOSTNAME_1
+    #user: "${ZOO_UID}:${ZOO_GID}"
     environment:
-      - ZOO_CONF_DIR=/conf
-      - ZOO_DATA_DIR=/data 
-      - ZOO_DATA_LOG_DIR=/datalog 
-      - ZOO_LOG_DIR=/logs 
+      - ZOO_HOME_DIR=${ZOO_HOME_DIR}
       - ZOO_TICK_TIME=2000 
       - ZOO_INIT_LIMIT=5 
       - ZOO_SYNC_LIMIT=2 
@@ -20,24 +19,25 @@ services:
       - ZOO_ADMINSERVER_ENABLED=true
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_MY_ID=1
-      - ZOO_SERVERS=server.1=0.0.0.0:2888:3888;2181 server.2=zk2:2888:3888;2181 server.3=zk3:2888:3888;2181
+      - ZOO_SERVERS=${ZOO_SERVERS}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
     volumes:
-      - 'zk1:/var/lib/zookeeper'      
-    #ports:
-      #- 30011:8080 # Zookeeper ADMINSERVER http://localhost:30001/commands/
-      #- 30012:2181 # Zookeeper  
-      #- 30003:2888 
-      #- 30004:3888 
+      - zk1:${ZOO_HOME_DIR}:z
 
   zk2:
     build: eco-zookeeper/
-    container_name: zk2
-    hostname: zk2
+    container_name: $ZOO_HOSTNAME_2
+    hostname: $ZOO_HOSTNAME_2
+    #user: "${ZOO_UID}:${ZOO_GID}"
     environment:
-      - ZOO_CONF_DIR=/conf
-      - ZOO_DATA_DIR=/data 
-      - ZOO_DATA_LOG_DIR=/datalog 
-      - ZOO_LOG_DIR=/logs 
+      - ZOO_HOME_DIR=${ZOO_HOME_DIR}
       - ZOO_TICK_TIME=2000 
       - ZOO_INIT_LIMIT=5 
       - ZOO_SYNC_LIMIT=2 
@@ -48,24 +48,25 @@ services:
       - ZOO_ADMINSERVER_ENABLED=true
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_MY_ID=2
-      - ZOO_SERVERS=server.1=zk1:2888:3888;2181 server.2=0.0.0.0:2888:3888;2181 server.3=zk3:2888:3888;2181
+      - ZOO_SERVERS=${ZOO_SERVERS}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
     volumes:
-      - 'zk2:/var/lib/zookeeper'      
-    #ports:
-      #- 30021:8080 # Zookeeper ADMINSERVER http://localhost:30011/commands/
-      #- 30022:2181 # Zookeeper  
-      #- 30003:2888 
-      #- 30004:3888 
+      - zk2:${ZOO_HOME_DIR}:z
 
   zk3:
     build: eco-zookeeper/
-    container_name: zk3
-    hostname: zk3
+    container_name: $ZOO_HOSTNAME_3
+    hostname: $ZOO_HOSTNAME_3
+    #user: "${ZOO_UID}:${ZOO_GID}"
     environment:
-      - ZOO_CONF_DIR=/conf
-      - ZOO_DATA_DIR=/data 
-      - ZOO_DATA_LOG_DIR=/datalog 
-      - ZOO_LOG_DIR=/logs 
+      - ZOO_HOME_DIR=${ZOO_HOME_DIR}
       - ZOO_TICK_TIME=2000 
       - ZOO_INIT_LIMIT=5 
       - ZOO_SYNC_LIMIT=2 
@@ -76,39 +77,54 @@ services:
       - ZOO_ADMINSERVER_ENABLED=true
       - ALLOW_ANONYMOUS_LOGIN=yes
       - ZOO_MY_ID=3
-      - ZOO_SERVERS=server.1=zk1:2888:3888;2181 server.2=zk2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181
+      - ZOO_SERVERS=${ZOO_SERVERS}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
     volumes:
-      - 'zk3:/var/lib/zookeeper'      
-    #ports:
-      #- 30031:8080 # Zookeeper ADMINSERVER http://localhost:30011/commands/
-      #- 30032:2181 # Zookeeper  
-      #- 30003:2888 
-      #- 30004:3888 
+      - zk3:${ZOO_HOME_DIR}:z      
+  # END ZooKeeper Cluster    
+  ##############################################################################3
 
-  #NiFi Cluster
+  ##############################################################################3
+  # NiFi
   eco-nifi:
     build: eco-nifi/
-    #container_name: eco-nifi
-    #hostname: eco-nifi
+    container_name: ${NIFI_HOSTNAME}
+    hostname: ${NIFI_HOSTNAME}
     ports:
-      - 30100-30109:8080 # Unsecured HTTP Web Port
-      - 30110-30119:8443 
-      - 30120-30129:8082
-      - 30130-30139:10000 
+      - ${NIFI_WEB_HTTP_PORT_EXTERNAL}:${NIFI_WEB_HTTP_PORT} # Unsecured HTTP Web Port
+      - ${NIFI_WEB_HTTPS_PORT_EXTERNAL}:${NIFI_WEB_HTTPS_PORT}
+      - ${NIFI_CLUSTER_NODE_PROTOCOL_PORT_EXTERNAL}:${NIFI_CLUSTER_NODE_PROTOCOL_PORT}
+      - ${NIFI_REMOTE_INPUT_SOCKET_PORT_EXTERNAL}:${NIFI_REMOTE_INPUT_SOCKET_PORT}
     environment:
-      - NIFI_WEB_HTTP_PORT=8080
-      - NIFI_CLUSTER_IS_NODE=true
-      - NIFI_CLUSTER_NODE_PROTOCOL_PORT=8082
-      - NIFI_ZK_CONNECT_STRING=zk1:2181,zk2:2181,zk3:2181
-      - NIFI_ZK_ROOT_NODE=
-      - NIFI_ELECTION_MAX_WAIT=1 min
-      #- NIFI_ELECTION_MAX_CANDIDATES=10
-      #- ZOO_SERVERS=server.1=zk1:2888:3888 server.2=zk2:2888:3888 server.3=zk3:2888:3888
-    #links:
-    #  - zk1:zk1
-    #  - zk2:zk2
-    #  - zk3:zk3
-  
+      - NIFI_VERSION=${NIFI_VERSION}
+      - NIFI_BASE_DIR=${NIFI_BASE_DIR}
+      #- NIFI_LOG_DIR=${NIFI_LOG_DIR}
+      #- NIFI_HOME=${NIFI_HOME}
+      #- NIFI_TOOLKIT_HOME=${NIFI_TOOLKIT_HOME}
+      - NIFI_CLUSTER_NODE_PROTOCOL_PORT=${NIFI_CLUSTER_NODE_PROTOCOL_PORT}
+      - NIFI_WEB_HTTP_PORT=${NIFI_WEB_HTTP_PORT}
+      - NIFI_WEB_HTTPS_PORT=${NIFI_WEB_HTTPS_PORT}
+      - NIFI_REMOTE_INPUT_SOCKET_PORT=${NIFI_REMOTE_INPUT_SOCKET_PORT}
+      - NIFI_CLUSTER_IS_NODE=${NIFI_CLUSTER_IS_NODE}
+      - NIFI_ZK_CONNECT_STRING=${NIFI_ZK_CONNECT_STRING}
+      - NIFI_ZK_ROOT_NODE=${NIFI_ZK_ROOT_NODE}
+      - NIFI_ELECTION_MAX_WAIT=${NIFI_ELECTION_MAX_WAIT}
+    volumes:
+      - nifi:${NIFI_BASE_DIR}:z
+      #- nifi_home:${NIFI_HOME}/conf
+    depends_on:
+      - $ZOO_HOSTNAME_1
+      - $ZOO_HOSTNAME_2
+      - $ZOO_HOSTNAME_3
+  # END NiFi
+  ##############################################################################3
 
   # Kafka/Zookeeper container
   #eco-kafka:
@@ -229,7 +245,7 @@ services:
 #    external: false
 
 volumes:
-  zk1:
+  zk1:     
   zk2:
   zk3:
-  kafka:
+  nifi:
